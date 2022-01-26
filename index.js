@@ -5,8 +5,6 @@ const admin = require("firebase-admin"); //
 require("dotenv").config();
 const { MongoClient } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
-const stripe = require("stripe")(process.env.STRIPE_SECRET);
-
 const port = process.env.PORT || 5000;
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT); //
@@ -41,22 +39,21 @@ async function run() {
   try {
     await client.connect();
     const database = client.db("hero_travel_agency");
-    const productsCollection = database.collection("blogs");
-    const purchaseCollection = database.collection("purcheases");
+    const blogsCollection = database.collection("blogs");
     const reviewsCollection = database.collection("reviews");
     const usersCollection = database.collection("users");
 
     // get blogs data
     app.get("/blogs", async (req, res) => {
-      const cursor = productsCollection.find({});
-      const products = await cursor.toArray();
-      res.send(products);
+      const cursor = blogsCollection.find({});
+      const blogs = await cursor.toArray();
+      res.send(blogs);
     });
     // post blogs data
 
     app.post("/blogs", async (req, res) => {
-      const product = req.body;
-      const result = await productsCollection.insertOne(product);
+      const blog = req.body;
+      const result = await blogsCollection.insertOne(blog);
       res.json(result);
     });
     // get single blogs
@@ -64,7 +61,7 @@ async function run() {
     app.get("/blogs/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
-      const result = await productsCollection.findOne(query);
+      const result = await blogsCollection.findOne(query);
       res.json(result);
     });
 
@@ -73,77 +70,7 @@ async function run() {
     app.delete("/blogs/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
-      const result = await productsCollection.deleteOne(query);
-      res.json(result);
-    });
-
-    // post purchase data
-    app.post("/my-orders", async (req, res) => {
-      const order = req.body;
-      const result = await purchaseCollection.insertOne(order);
-      res.send(result);
-    });
-
-    // Get purchase data
-
-    app.get("/my-orders", async (req, res) => {
-      const cursor = purchaseCollection.find({});
-      const orders = await cursor.toArray();
-      res.send(orders);
-    });
-
-    // Delete purchase data
-
-    app.delete("/my-orders/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const result = await purchaseCollection.deleteOne(query);
-      res.json(result);
-    });
-
-    // Get purchase data by email
-
-    app.get("/my-orders", async (req, res) => {
-      let query = {};
-      const email = req.query.email;
-      if (email) {
-        query = { email: email };
-      }
-      const cursor = await purchaseCollection.find(query).toArray();
-      res.json(cursor);
-    });
-
-    // get orders id for database
-    app.get("/my-orders/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const result = await purchaseCollection.findOne(query);
-      res.json(result);
-    });
-
-    app.put("/udpate/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: ObjectId(id) };
-      const options = { upsert: true };
-      const updatedDoc = {
-        $set: {
-          status: "Shipped",
-        },
-      };
-      const result = await purchaseCollection.updateOne(
-        filter,
-        updatedDoc,
-        options
-      );
-
-      res.json(result);
-    });
-
-    // post purchase data
-
-    app.post("/purchase", async (req, res) => {
-      const purchase = req.body;
-      const result = await purchaseCollection.insertOne(purchase);
+      const result = await blogsCollection.deleteOne(query);
       res.json(result);
     });
 
@@ -207,33 +134,7 @@ async function run() {
       res.json(result);
     });
 
-    //  pament mathod
-    app.post("/create-payment-intent", async (req, res) => {
-      const paymentInfo = req.body;
-      const amount = paymentInfo.price * 100;
-      const paymentIntent = await stripe.paymentIntents.create({
-        currency: "usd",
-        amount: amount,
-        payment_method_types: ["card"],
-      });
-      res.json({ clientSecret: paymentIntent.client_secret });
-    });
-
-    // payment status
-    app.put("/my-orders/:id", async (req, res) => {
-        const id = req.params.id;
-        const payment = req.body;
-        const filter = { _id: ObjectId(id) };
-        const updateDoc = {
-          $set: {
-            payment: payment,
-          },
-        };
-        const result = await purchaseCollection.updateOne(filter, updateDoc);
-        res.json(result);
-      });
-
-
+   
     // add user admin
 
     app.put("/users/admin", async (req, res) => {
@@ -251,7 +152,7 @@ async function run() {
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("Hello Zara Travel Agency");
+  res.send("Hello Hero Travel Agency");
 });
 
 app.listen(port, () => {
