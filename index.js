@@ -44,11 +44,41 @@ async function run() {
     const usersCollection = database.collection("users");
 
     // get blogs data
-    app.get("/blogs", async (req, res) => {
+  /*   app.get("/blogs", async (req, res) => {
       const cursor = blogsCollection.find({});
       const blogs = await cursor.toArray();
-      res.send(blogs);
+      const count = await cursor.count();
+      res.send({
+        count,
+        blogs
+      });
+    }); */
+
+  // GET product 
+      app.get('/blogs', async(req, res) => {
+        const cursor = blogsCollection.find({});
+        const page = req.query.page;
+        const size = parseInt(req.query.size);
+        let blogs;
+        const count = await cursor.count();
+        if(page){
+          blogs = await cursor.skip(page*size).limit(size).toArray();
+        }
+        else{
+          blogs = await cursor.toArray();
+        }
+        
+      //const products = await cursor.limit(10).toArray();
+      
+
+        res.json({
+            count,
+            blogs
+        })
     });
+
+
+
     // post blogs data
 
     app.post("/blogs", async (req, res) => {
